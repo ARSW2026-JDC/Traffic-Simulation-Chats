@@ -24,12 +24,12 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '20.x'
+          node-version: '24.x'
 
       - name: Install, build, and test
         run: |
@@ -43,7 +43,7 @@ jobs:
           npm run prisma:generate
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: node-app
           path: |
@@ -63,16 +63,16 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: node-app
 
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9E23430C12844691983F871B0B4320E8 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_AAAAB28555294A74B934679AEECA45B5 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_28B569EAC22B4962B9BE952932BFB1F7 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_AC86A0259A0A40A1BD95AC69B3C43F0C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_766F0720B29D4AECB3B315A3CCA649DE }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9DB9F8AF26664F339FEAC6F1554EA1B8 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
