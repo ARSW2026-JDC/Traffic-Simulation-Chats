@@ -6,6 +6,12 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import type { Socket } from 'net';
 import { AppModule } from './app.module';
 import { envs } from './config/envs';
+import {
+  httpRequestsTotal,
+  httpRequestDurationSeconds,
+  startMetricsPush,
+  stopMetricsPush,
+} from './metrics';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -26,6 +32,23 @@ async function bootstrap() {
     origin: envs.allowedOrigins,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
+  });
+
+  app.use((req: any, res: any, next: () => void) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      const route = req.route?.path || req.originalUrl || req.url || 'unknown';
+      httpRequestsTotal.inc({
+        method: req.method,
+        route,
+        status_code: res.statusCode,
+      });
+      httpRequestDurationSeconds.observe(
+        { method: req.method, route, status_code: res.statusCode },
+        (Date.now() - start) / 1000,
+      );
+    });
+    next();
   });
 
   const config = new DocumentBuilder()
@@ -59,6 +82,18 @@ async function bootstrap() {
       // Ignore destroy errors
     }
   });
+
+  startMetricsPush();
+
+  process.on('SIGTERM', () => {
+    stopMetricsPush();
+    app.close();
+  });
+  process.on('SIGINT', () => {
+    stopMetricsPush();
+    app.close();
+  });
+
   logger.log(`Backend running on port ${port}`);
   logger.log(`API docs available at http://localhost:${port}/api`);
 }
