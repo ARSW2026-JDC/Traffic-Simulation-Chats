@@ -13,6 +13,13 @@ import * as admin from 'firebase-admin';
 import { ChatService } from './chat.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { getFirebaseAdmin } from '../auth/firebase-admin.provider';
+import {
+  wsConnectionsActive,
+  wsConnectionsTotal,
+  wsDisconnectionsTotal,
+  wsConnectionErrorsTotal,
+  messagesSentTotal,
+} from '../metrics';
 
 @WebSocketGateway({ namespace: '/chat', cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -28,6 +35,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     const handleSocketError = (err: Error) => {
+      wsConnectionErrorsTotal.inc({ reason: 'socket_error' });
       this.logger.error(`Socket error: ${err.message}`);
       if (!client.disconnected) {
         client.disconnect();
@@ -42,12 +50,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         (client.handshake.query?.token as string);
 
       if (!token) {
+        wsConnectionErrorsTotal.inc({ reason: 'no_token' });
         client.disconnect();
         return;
       }
 
       const firebaseApp = getFirebaseAdmin();
       if (!firebaseApp) {
+        wsConnectionErrorsTotal.inc({ reason: 'no_firebase' });
         client.disconnect();
         return;
       }
@@ -57,12 +67,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         where: { firebaseUid: decoded.uid },
       });
       if (!user) {
+        wsConnectionErrorsTotal.inc({ reason: 'user_not_found' });
         client.disconnect();
         return;
       }
 
       // Solo BLOCKED impide conexión
       if (user.estatus === 'BLOCKED') {
+        wsConnectionErrorsTotal.inc({ reason: 'blocked' });
         client.disconnect();
         return;
       }
@@ -76,7 +88,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.data.userId = user.id;
       client.data.userName = user.name || user.email;
       client.data.role = user.role;
+
+      wsConnectionsTotal.inc();
+      wsConnectionsActive.inc();
     } catch (err) {
+      wsConnectionErrorsTotal.inc({ reason: 'auth_error' });
       this.logger.error(`Connection error: ${err?.message || 'unknown'}`);
       client.disconnect();
     }
@@ -84,6 +100,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleDisconnect(client: Socket) {
     // Cambiar estatus a INACTIVE al desconectar solo si no está bloqueado
+    wsDisconnectionsTotal.inc();
+    wsConnectionsActive.dec();
     if (client.data?.userId) {
       try {
         const user = await this.prisma.user.findUnique({
@@ -122,6 +140,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.data.userId,
       data.content.trim(),
     );
+    messagesSentTotal.inc({ role: user?.role || 'unknown' });
     client.emit('message:new', { ...msg, clientId: data.clientId });
     this.server.emit('message:new', { ...msg });
   }
