@@ -1,4 +1,4 @@
-name: Build and deploy Node.js app to Azure Web App - chats-cuts
+name: Build and deploy Node.js app to Azure Web App - chats-CUTS
 
 on:
   push:
@@ -31,12 +31,14 @@ jobs:
         with:
           node-version: '24.x'
 
-      - name: Install, build, and test
+      - name: Install, generate Prisma client, build, and test
         run: |
           npm ci
+          npm run prisma:generate
           npm run build --if-present
           npm run test --if-present
 
+      # Instalar solo dependencias de producción para el deploy
       - name: Install production dependencies
         run: |
           npm ci --omit=dev
@@ -66,19 +68,19 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: node-app
-
+      
       - name: Login to Azure
-        uses: azure/login@v3
+        uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_AC86A0259A0A40A1BD95AC69B3C43F0C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_766F0720B29D4AECB3B315A3CCA649DE }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9DB9F8AF26664F339FEAC6F1554EA1B8 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7109F4C04C5342378EB8446432CB198E }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0953AA8AF9B7471AB170249313F3C019 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1C2304EEE3AF41FBA9A851AFA2DC3763 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'chats-cuts'
+          app-name: 'chats-CUTS'
           slot-name: 'Production'
           package: .
           clean: true
