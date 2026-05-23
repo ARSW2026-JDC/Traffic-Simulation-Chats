@@ -44,14 +44,14 @@ describe('ChatService', () => {
       {
         id: 'msg-1',
         userId: 'user-1',
-        user: { name: 'User 1', email: 'user1@example.com' },
+        user: { firebaseUid: 'fb-uid-1', name: 'User 1', email: 'user1@example.com' },
         content: 'Hello',
         createdAt: new Date('2024-01-01T00:00:00Z'),
       },
       {
         id: 'msg-2',
         userId: 'user-2',
-        user: { name: 'User 2', email: 'user2@example.com' },
+        user: { firebaseUid: 'fb-uid-2', name: 'User 2', email: 'user2@example.com' },
         content: 'Hi there',
         createdAt: new Date('2024-01-02T00:00:00Z'),
       },
@@ -97,7 +97,7 @@ describe('ChatService', () => {
       expect(prismaMock.chatMessage.findMany).toHaveBeenCalledWith({
         take: 10,
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true, email: true } } },
+        include: { user: { select: { firebaseUid: true, name: true, email: true } } },
       });
     });
 
@@ -111,7 +111,7 @@ describe('ChatService', () => {
         skip: 1,
         cursor: { id: 'msg-2' },
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true, email: true } } },
+        include: { user: { select: { firebaseUid: true, name: true, email: true } } },
       });
     });
 
@@ -134,6 +134,7 @@ describe('ChatService', () => {
 
   describe('saveMessage', () => {
     const mockUser = {
+      firebaseUid: 'fb-uid-test',
       name: 'Test User',
       email: 'test@example.com',
     };
