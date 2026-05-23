@@ -63,13 +63,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const decoded = await admin.auth(firebaseApp).verifyIdToken(token);
-      const user = await this.prisma.user.findUnique({
+      let user = await this.prisma.user.findUnique({
         where: { firebaseUid: decoded.uid },
       });
+
       if (!user) {
-        wsConnectionErrorsTotal.inc({ reason: 'user_not_found' });
-        client.disconnect();
-        return;
+        user = await this.prisma.user.create({
+          data: {
+            firebaseUid: decoded.uid,
+            email: decoded.email || null,
+            name: decoded.name || null,
+            avatarUrl: decoded.picture || null,
+            role: decoded.email ? 'USER' : 'GUEST',
+          },
+        });
       }
 
       // Solo BLOCKED impide conexión

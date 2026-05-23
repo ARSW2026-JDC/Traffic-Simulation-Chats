@@ -16,7 +16,7 @@ export class ChatService {
       take: limit,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       orderBy: { createdAt: 'desc' },
-      include: { user: { select: { name: true, email: true } } },
+      include: { user: { select: { firebaseUid: true, name: true, email: true } } },
     });
     dbQueryDurationSeconds.observe(
       { operation: 'findMany' },
@@ -25,7 +25,7 @@ export class ChatService {
     messagesRetrievedTotal.inc(messages.length);
     return messages.reverse().map((m) => ({
       id: m.id,
-      userId: m.userId,
+      userId: m.user.firebaseUid,
       userName: m.user.name || m.user.email,
       content: m.content,
       timestamp: m.createdAt.getTime(),
@@ -36,7 +36,7 @@ export class ChatService {
     const start = Date.now();
     const m = await this.prisma.chatMessage.create({
       data: { userId, content },
-      include: { user: { select: { name: true, email: true } } },
+      include: { user: { select: { firebaseUid: true, name: true, email: true } } },
     });
     dbQueryDurationSeconds.observe(
       { operation: 'create' },
@@ -45,7 +45,7 @@ export class ChatService {
     messagesSavedTotal.inc();
     return {
       id: m.id,
-      userId: m.userId,
+      userId: m.user.firebaseUid,
       userName: m.user.name || m.user.email,
       content: m.content,
       timestamp: m.createdAt.getTime(),

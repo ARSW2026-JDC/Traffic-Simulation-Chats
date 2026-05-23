@@ -13,7 +13,6 @@ Módulo de chat en tiempo real para la aplicación CUTS. Proporciona funcionalid
 - **[TypeScript](https://www.typescriptlang.org/)** v5.3.3 - Tipado
 - **[Prisma](https://www.prisma.io/)** v7.5.0 - ORM
 - **[PostgreSQL](https://www.postgresql.org/)** - Base de datos
-- **[Redis](https://redis.io/)** v5.3.2 - Cache y sesiones
 - **[Socket.io](https://socket.io/)** v4.6.1 - WebSocket
 - **[firebase-admin](https://firebase.google.com/docs/admin)** v12.0.0 - Autenticación
 - **[Joi](https://joi.dev/)** v18.0.2 - Validación de env vars
@@ -29,7 +28,6 @@ Módulo de chat en tiempo real para la aplicación CUTS. Proporciona funcionalid
 
 ```bash
 npm install
-npm run prisma:generate  # Generar cliente Prisma
 ```
 
 ## Ejecución
@@ -56,12 +54,21 @@ npm run test:cov       # Coverage
 |----------|-------------|-----------|
 | `PORT` | Puerto del servidor | ✅ |
 | `DATABASE_URL` | URL PostgreSQL | ✅ |
-| `DIRECT_URL` | URL directa PostgreSQL | ✅ |
-| `REDIS_HOST` | Host Redis | ✅ |
-| `REDIS_PORT` | Puerto Redis | ✅ |
-| `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID | ✅ |
-| `VITE_FIREBASE_PRIVATE_KEY` | Firebase Private Key | ✅ |
-| `VITE_FIREBASE_CLIENT_EMAIL` | Firebase Client Email | ✅ |
+| `FIREBASE_PROJECT_ID` | Firebase Project ID | ✅ |
+| `FIREBASE_CLIENT_EMAIL` | Firebase Client Email | ✅ |
+| `FIREBASE_PRIVATE_KEY` | Firebase Private Key | ✅ |
+| `VITE_FIREBASE_API_KEY` | Firebase API Key (frontend) | ✅ |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain (frontend) | ✅ |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID (frontend) | ✅ |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket (frontend) | ✅ |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase Sender ID (frontend) | ✅ |
+| `VITE_FIREBASE_APP_ID` | Firebase App ID (frontend) | ✅ |
+| `ALLOWED_ORIGINS` | CORS origins (comma-separated) | - |
+
+## Endpoints
+
+- REST: `GET /chat/messages`
+- WebSocket namespace: `/chat`
 
 ## Estructura
 
@@ -87,7 +94,9 @@ src/
 | `npm run format` | Prettier |
 | `npm run prisma:generate` | Genera cliente Prisma |
 | `npm run prisma:migrate` | Migra la base de datos |
+| `npm run prisma:push` | Aplica cambios sin migracion |
+| `npm run test:cov` | Coverage |
 
 ## Notas de Implementación
 
-Este módulo se comunica con el gateway a través de la ruta `/nrt` para manejar conexiones WebSocket. El namespace utilizado es `/chat` para separar las conexiones de chat de otros servicios.
+Este módulo se comunica con el gateway a través de la ruta `/chat` para manejar conexiones WebSocket. El namespace utilizado es `/chat`.
