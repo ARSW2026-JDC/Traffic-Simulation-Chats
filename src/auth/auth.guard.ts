@@ -26,11 +26,19 @@ export class AuthGuard implements CanActivate {
       const decoded = await admin
         .auth(firebaseApp)
         .verifyIdToken(auth.split(' ')[1]);
-      const user = await this.prisma.user.findUnique({
+      let user = await this.prisma.user.findUnique({
         where: { firebaseUid: decoded.uid },
       });
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        user = await this.prisma.user.create({
+          data: {
+            firebaseUid: decoded.uid,
+            email: decoded.email || null,
+            name: decoded.name || null,
+            avatarUrl: decoded.picture || null,
+            role: decoded.email ? 'USER' : 'GUEST',
+          },
+        });
       }
       if (user.estatus === 'BLOCKED') {
         throw new UnauthorizedException('User is blocked');

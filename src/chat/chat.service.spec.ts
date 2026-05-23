@@ -44,14 +44,14 @@ describe('ChatService', () => {
       {
         id: 'msg-1',
         userId: 'user-1',
-        user: { name: 'User 1', email: 'user1@example.com' },
+        user: { firebaseUid: 'fb-uid-1', name: 'User 1', email: 'user1@example.com' },
         content: 'Hello',
         createdAt: new Date('2024-01-01T00:00:00Z'),
       },
       {
         id: 'msg-2',
         userId: 'user-2',
-        user: { name: 'User 2', email: 'user2@example.com' },
+        user: { firebaseUid: 'fb-uid-2', name: 'User 2', email: 'user2@example.com' },
         content: 'Hi there',
         createdAt: new Date('2024-01-02T00:00:00Z'),
       },
@@ -80,7 +80,7 @@ describe('ChatService', () => {
       prismaMock.chatMessage.findMany.mockResolvedValue([
         {
           ...mockMessages[0],
-          user: { name: null, email: 'user1@example.com' },
+          user: { firebaseUid: 'fb-uid-1', name: null, email: 'user1@example.com' },
         },
       ]);
 
@@ -97,7 +97,7 @@ describe('ChatService', () => {
       expect(prismaMock.chatMessage.findMany).toHaveBeenCalledWith({
         take: 10,
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true, email: true } } },
+        include: { user: { select: { firebaseUid: true, name: true, email: true } } },
       });
     });
 
@@ -111,7 +111,7 @@ describe('ChatService', () => {
         skip: 1,
         cursor: { id: 'msg-2' },
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true, email: true } } },
+        include: { user: { select: { firebaseUid: true, name: true, email: true } } },
       });
     });
 
@@ -134,6 +134,7 @@ describe('ChatService', () => {
 
   describe('saveMessage', () => {
     const mockUser = {
+      firebaseUid: 'fb-uid-test',
       name: 'Test User',
       email: 'test@example.com',
     };
@@ -153,7 +154,7 @@ describe('ChatService', () => {
 
       expect(prismaMock.chatMessage.create).toHaveBeenCalledWith({
         data: { userId: 'user-1', content: 'New message' },
-        include: { user: { select: { name: true, email: true } } },
+        include: { user: { select: { firebaseUid: true, name: true, email: true } } },
       });
       expect(result.content).toBe('New message');
       expect(result.userName).toBe('Test User');
@@ -162,7 +163,7 @@ describe('ChatService', () => {
     it('should use user email as fallback when name is null', async () => {
       prismaMock.chatMessage.create.mockResolvedValue({
         ...mockMessage,
-        user: { name: null, email: 'test@example.com' },
+        user: { firebaseUid: 'fb-uid-test', name: null, email: 'test@example.com' },
       });
 
       const result = await service.saveMessage('user-1', 'New message');
